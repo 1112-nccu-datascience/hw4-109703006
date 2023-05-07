@@ -1,5 +1,4 @@
 library(shiny)
-library(ggvis)
 library(ggbiplot)
 library(FactoMineR)
 library(factoextra)
@@ -12,15 +11,18 @@ server <- function(input, output) {
     ir.species <- iris[, 5]
     # apply PCA - scale. = TRUE is highly advisable, but default is FALSE.
     ir.pca <- prcomp(log.ir, center = TRUE, scale. = TRUE)
+    # initialize input
     choices <- c(1, 2)
     center_val <- 3
 
+    # get input
     observeEvent(c(input$x_choice, input$y_choice, input$center_val), {
         if (input$x_choice != input$y_choice) {
             choices <- c(as.integer(input$x_choice), as.integer(input$y_choice))
         }
         center_val <- as.integer(input$center_val)
 
+        # generate PCA plot
         g <- ggbiplot(ir.pca,
             obs.scale = 1, var.scale = 1, groups = ir.species,
             choices = choices, ellipse = TRUE
@@ -28,6 +30,7 @@ server <- function(input, output) {
         g <- g + scale_color_discrete(name = "")
         g <- g + theme(legend.direction = "horizontal", legend.position = "top")
 
+        # generate CA plot
         model <- kmeans(iris[, 1:4], centers = center_val)
         cmodel3 <- ca::ca(table(iris$Species, model$cluster), nd = 4)
         ca <- fviz_ca(cmodel3,
@@ -35,6 +38,7 @@ server <- function(input, output) {
                 "rowgreen", arrows = c(FALSE, TRUE)
         )
 
+        # save the results
         output$plot1 <- renderPlot({
             g
         })
